@@ -1,24 +1,8 @@
-const mergeSort = require('./mergeSort');
 const node = require('./node');
-
-const prepareArray = (arr) => {
-    //sort the inp arr
-    const sortedArr = arr.sort((a, b) => a - b);
-    // console.log({ sortedArr });
-
-    let retArr = [];
-    // remove duplicated items
-    sortedArr.forEach((item) => {
-        if (!retArr.includes(item)) {
-            retArr.push(item);
-        }
-    });
-
-    return retArr;
-};
+const arrayHandler = require('./arrayHandler');
 
 const binaryTree = (arr) => {
-    const sortedArr = prepareArray(arr);
+    const sortedArr = arrayHandler().prepareArray(arr);
     // const sortedArr = [...new Set(arr)].sort((a, b) => a - b);
     // console.log({ sortedArr });
 
@@ -216,34 +200,41 @@ const binaryTree = (arr) => {
         }
     };
 
-    const height = (value) => {
+    const height = (value, currentNode = root) => {
         if (!value || value === null) {
             throw new Error('No value to calculate height');
         } else if (findItem(value)) {
-            let itemHeight = 0;
-            let leftSubTreeHeight = 0;
-            let rightSubTreeHeight = 0;
-
             const targetNode = findItem(value);
-            let currentNode = findItem(value);
+            // console.log({ targetNode });
 
-            while (currentNode.left) {
-                leftSubTreeHeight += 1;
-                currentNode = currentNode.left;
-            }
-            while (currentNode.right) {
-                rightSubTreeHeight += 1;
-                currentNode = currentNode.right;
-            }
+            let itemHeight = maxHeight(targetNode);
+            console.log(`Height from node "${value}" to its furthest child node is: ${itemHeight}`);
 
-            itemHeight =
-                targetNode.data !== getTreeRoot().data
-                    ? Math.max(leftSubTreeHeight, rightSubTreeHeight)
-                    : Math.max(leftSubTreeHeight, rightSubTreeHeight) + 1;
-            console.log(`Height from root to node "${value}" is: ${itemHeight}`);
             return itemHeight;
         } else {
             return null;
+        }
+    };
+
+    const minHeight = (currentNode = null) => {
+        if (currentNode === null) {
+            return -1;
+        } else {
+            let leftSubTreeHeight = minHeight(currentNode.left);
+            let rightSubTreeHeight = minHeight(currentNode.right);
+
+            return leftSubTreeHeight < rightSubTreeHeight ? leftSubTreeHeight + 1 : rightSubTreeHeight + 1;
+        }
+    };
+
+    const maxHeight = (currentNode = null) => {
+        if (currentNode === null) {
+            return -1;
+        } else {
+            let leftSubTreeHeight = maxHeight(currentNode.left);
+            let rightSubTreeHeight = maxHeight(currentNode.right);
+
+            return leftSubTreeHeight > rightSubTreeHeight ? leftSubTreeHeight + 1 : rightSubTreeHeight + 1;
         }
     };
 
@@ -266,14 +257,68 @@ const binaryTree = (arr) => {
         }
     };
 
-    const prettyPrint = (node = root, prefix = '', isLeft = true) => {
-        if (node.right) {
-            prettyPrint(node.right, `${prefix}${isLeft ? '|   ' : '    '}`, false);
+    const isBalanced = () => {
+        const ret = maxHeight(getTreeRoot()) - minHeight(getTreeRoot()) > 1 ? false : true;
+        ret === true ? console.log('Binary tree is balanced') : console.log('Binary tree is NOT balanced');
+        return ret;
+    };
+
+    const reBalance = () => {
+        if (isBalanced()) {
+            console.log('Tree already balanced');
+            return;
+        } else {
+            const queue = [getTreeRoot()];
+            let allTreeData = [];
+
+            while (queue.length > 0) {
+                const currentNode = queue.shift();
+
+                allTreeData.push(currentNode.data);
+
+                if (currentNode.left) {
+                    queue.push(currentNode.left);
+                }
+                if (currentNode.right) {
+                    queue.push(currentNode.right);
+                }
+            }
+
+            allTreeData = arrayHandler().prepareArray(allTreeData);
+            root = buildTree(allTreeData);
         }
-        console.log(`${prefix}${isLeft ? '└── ' : '┌── '}${node.data}`);
-        if (node.left) {
-            prettyPrint(node.left, `${prefix}${isLeft ? '    ' : '|   '}`, true);
+    };
+
+    const findMinValue = () => {
+        let currentNode = getTreeRoot();
+
+        while (currentNode.left !== null) {
+            currentNode = currentNode.left;
         }
+        return currentNode.data;
+    };
+
+    const findMaxValue = () => {
+        let currentNode = getTreeRoot();
+
+        while (currentNode.right !== null) {
+            currentNode = currentNode.right;
+        }
+        return currentNode.data;
+    };
+
+    const isContainValue = (value) => {
+        let currentNode = getTreeRoot();
+
+        while (currentNode) {
+            if (currentNode.data) {
+                return true;
+            }
+
+            currentNode.data < value ? (currentNode = currentNode.right) : (currentNode = currentNode.left);
+        }
+
+        return false;
     };
 
     return {
@@ -287,7 +332,11 @@ const binaryTree = (arr) => {
         postOrder,
         height,
         depth,
-        prettyPrint,
+        isBalanced,
+        reBalance,
+        isContainValue,
+        findMinValue,
+        findMaxValue,
     };
 };
 
